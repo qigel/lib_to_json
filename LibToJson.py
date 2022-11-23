@@ -52,6 +52,8 @@ def escaped_string_convert(obj):
                 for el in obj:
                     new_obj.append(escaped_string_convert(el))
                 obj = new_obj
+            if len(obj) == 1:
+                obj = obj[0]
     return obj
 
 
@@ -67,32 +69,29 @@ def group_to_dict(group):
         if attr_cnt[attr.name] == 1:
             out_dict[attr.name] = attr.value
         else:
-            if out_dict.get('comp_attribute,' + str(attr.name)) is None:
-                out_dict['comp_attribute,' + str(attr.name)] = list()
-            out_dict['comp_attribute,' + str(attr.name)].append(attr.value)
+            if out_dict.get(attr.name) is None:
+                out_dict[attr.name] = list()
+            out_dict[attr.name].append(attr.value)
     if len(group.defines) != 0:
         out_dict['define'] = list()
         for define in group.defines:
             out_dict['define'].append(
                 dict(attribute_name=define.attribute_name, attribute_type=define.attribute_type,
                      group_name=define.group_name))
-    contains_cells = False
-    for cgroup in group.groups:
-        if cgroup.group_name == 'cell':
-            contains_cells = True
+    for gr in group.groups:
+        if gr.args[0] is None:
+            out_dict[gr.group_name] = group_to_dict(gr)
         else:
-            out_dict[str(cgroup.group_name) + ',' + str(cgroup.args[0])] = group_to_dict(cgroup)
-    if contains_cells:
-        out_dict['cells'] = dict()
-        for cell in group.groups:
-            if cell.group_name == 'cell':
-                out_dict['cells'][cell.args[0]] = group_to_dict(cell)
+            if out_dict.get(gr.group_name) is None:
+                out_dict[gr.group_name] = dict()
+            out_dict[gr.group_name][gr.args[0]] = group_to_dict(gr)
     return out_dict
 
 
 def lib_to_json(liberty_file, json_file):
     library = parse_liberty(open(liberty_file).read())
     library = escaped_string_convert(library)
-    #JSON_dict = dict()
-    JSON_dict = group_to_dict(library)
+    JSON_dict = dict()
+    JSON_dict[library.group_name] = dict()
+    JSON_dict[library.group_name][library.args[0]] = group_to_dict(library)
     json.dump(JSON_dict, open(json_file, 'w'), default=encode_escaped_string)
