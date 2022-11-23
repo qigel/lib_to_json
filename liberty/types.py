@@ -273,7 +273,7 @@ class EscapedString:
         self.value = value
 
     def __str__(self):
-        return '"{}"'.format(self.value)
+        return '{}'.format(self.value)
 
     def __repr__(self):
         return str(self)
@@ -295,7 +295,7 @@ class ArithExpression:
         self.value = value
 
     def __str__(self):
-        return '"{}"'.format(self.value)
+        return '{}'.format(self.value)
 
     def __repr__(self):
         return str(self)
