@@ -45,13 +45,18 @@ def escaped_string_convert(obj):
         obj = str(obj)
     elif isinstance(obj, list):
         if isinstance(obj[0], EscapedString):
-            try:
-                obj = ast.literal_eval(str(obj))
-            except:
-                new_obj = list()
-                for el in obj:
-                    new_obj.append(escaped_string_convert(el))
-                obj = new_obj
+            new_obj = list()
+            for el in obj:
+                try:
+                    el1 = ast.literal_eval(str(el))
+                    if isinstance(el1, tuple):
+                        el = ast.literal_eval('[' + str(el) + ']')
+                    else:
+                        el = el1
+                except:
+                    el = str(el)
+                new_obj.append(el)
+            obj = new_obj
             if len(obj) == 1:
                 obj = obj[0]
     return obj
@@ -78,37 +83,17 @@ def group_to_dict(group):
             out_dict['define'].append(
                 dict(attribute_name=define.attribute_name, attribute_type=define.attribute_type,
                      group_name=define.group_name))
-    gr_cnt = dict()
     for gr in group.groups:
         if gr.args[0] is None:
-            if gr_cnt.get(gr.group_name) is None:
-                gr_cnt[gr.group_name] = 1
-            else:
-                gr_cnt[gr.group_name] += 1
-        else:
-            if gr_cnt.get(gr.group_name) is None:
-                gr_cnt[gr.group_name] = dict()
-            if gr_cnt[gr.group_name].get(gr.args[0]) is None:
-                gr_cnt[gr.group_name][gr.args[0]] = 1
-            else:
-                gr_cnt[gr.group_name][gr.args[0]] += 1
-    for gr in group.groups:
-        if gr.args[0] is None:
-            if gr_cnt[gr.group_name] == 1:
-                out_dict[gr.group_name] = group_to_dict(gr)
-            else:
-                if out_dict.get(gr.group_name) is None:
-                    out_dict[gr.group_name] = list()
-                out_dict[gr.group_name].append(group_to_dict(gr))
+            if out_dict.get(gr.group_name) is None:
+                out_dict[gr.group_name] = list()
+            out_dict[gr.group_name].append(group_to_dict(gr))
         else:
             if out_dict.get(gr.group_name) is None:
                 out_dict[gr.group_name] = dict()
-            if gr_cnt[gr.group_name][gr.args[0]] == 1:
-                out_dict[gr.group_name][gr.args[0]] = group_to_dict(gr)
-            else:
-                if out_dict[gr.group_name].get(gr.args[0]) is None:
-                    out_dict[gr.group_name][gr.args[0]] = list()
-                out_dict[gr.group_name][gr.args[0]].append(group_to_dict(gr))
+            if out_dict[gr.group_name].get(gr.args[0]) is None:
+                out_dict[gr.group_name][gr.args[0]] = list()
+            out_dict[gr.group_name][gr.args[0]].append(group_to_dict(gr))
     return out_dict
 
 
